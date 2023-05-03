@@ -11,6 +11,7 @@
 - husky (Git 操作自動制約)
 - hygen (コンポーネントの自動生成)
 - lint-staged (コミット時に lint,型チェック実行)
+- react-icons (アイコン)
 
 ## npm script
 
