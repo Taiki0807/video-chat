@@ -1,0 +1,27 @@
+.header {
+  background: #0082e6;
+  height: 65px;
+  width: 100%;
+}
+.header__wrapper {
+  height: 100%;
+}
+.nav {
+  height: 100%;
+}
+.logo {
+  color: white;
+  font-size: 1.8em;
+  line-height: 65px;
+  padding: 0 50px;
+  font-weight: bold;
+}
+.nav__wrapper {
+  height: 100%;
+  margin: 0;
+  float: right;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 50px;
+}
