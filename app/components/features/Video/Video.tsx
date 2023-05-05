@@ -12,6 +12,28 @@ export const Video = (): JSX.Element => {
     useRef<RTCPeerConnection | null>(null);
 
   useEffect(() => {
+    const roomName = 'VNodi2FTuYzU2EyW9pxFKR';
+    const socket = new WebSocket(
+      `ws://localhost:8000/ws/signaling/${roomName}/`
+    );
+
+    socket.onopen = () => {
+      console.log('WebSocket connected.');
+    };
+
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    socket.onclose = () => {
+      console.log('WebSocket disconnected.');
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
+  useEffect(() => {
     const init = async () => {
       try {
         const stream =
