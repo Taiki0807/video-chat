@@ -1,10 +1,9 @@
-import { Video } from './components/features';
+import { TopPage } from './components/pages';
 
 export default function Home() {
   return (
     <div>
-      hello world
-      <Video />
+      <TopPage />
     </div>
   );
 }

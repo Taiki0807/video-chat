@@ -1,0 +1,21 @@
+.toppage {
+  width: 100vw;
+  height: calc(100vh - 65px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.linktext {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.link___item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #eceeef;
+  border-radius: 5px;
+  padding: 20px;
+}
