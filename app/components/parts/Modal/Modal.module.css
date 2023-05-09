@@ -1,0 +1,51 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 120;
+}
+.overlay > .content {
+  z-index: 200;
+  min-width: 30%;
+  padding: 1em;
+  background: #fff;
+  color: black;
+  min-height: 15%;
+}
+.close__btn {
+  --close-btn-size: 30px;
+  --close-btn-width: 100%;
+  --close-btn-height: 2px;
+  --close-btn-color: #ccc;
+  float: right;
+  position: relative;
+  height: var(--close-btn-size);
+  width: var(--close-btn-size);
+  background-color: transparent;
+  border-color: transparent;
+  cursor: pointer;
+}
+.close__line {
+  position: absolute;
+  background: var(--close-btn-color);
+}
+.close__line:nth-child(1) {
+  left: 0;
+  top: 50%;
+  transform: translate(0%, -50%) rotate(45deg);
+  width: var(--close-btn-width);
+  height: var(--close-btn-height);
+}
+.close__line:nth-child(2) {
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, 0%) rotate(45deg);
+  width: var(--close-btn-height);
+  height: var(--close-btn-width);
+}
