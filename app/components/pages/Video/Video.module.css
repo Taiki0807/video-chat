@@ -1,0 +1,78 @@
+.input {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: calc(100vh - 140px);
+  background: #1f201f;
+}
+.videoContainer {
+  width: 100%;
+  padding: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 50px;
+  flex: 1;
+  overflow: hidden;
+}
+.video {
+  border-radius: 20px;
+  height: 480px;
+  width: auto;
+}
+.vide__footer {
+  background-color: black;
+  width: 100vw;
+  height: 75px;
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30px;
+}
+.icon__item {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  flex-grow: 1;
+}
+.right {
+  display: flex;
+  align-items: center;
+}
+.modal__item {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+}
+.modal__item p {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+@media screen and (max-width: 1400px) {
+  .videoContainer {
+    flex-direction: column;
+  }
+  .video {
+    max-height: 300px;
+  }
+}
+@media screen and (max-width: 767px) {
+  .video {
+    max-height: 250px;
+    max-width: 300px;
+  }
+}
