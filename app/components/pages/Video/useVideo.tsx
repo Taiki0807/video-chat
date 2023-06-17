@@ -267,7 +267,11 @@ const useWebSocket = ({ roomID }: Props) => {
           restart();
         }
         try {
-          if (peerConnectionRef.current) {
+          if (
+            peerConnectionRef.current &&
+            peerConnectionRef.current.signalingState !==
+              'stable'
+          ) {
             await peerConnectionRef.current.setRemoteDescription(
               message.sdp
             );
@@ -301,7 +305,11 @@ const useWebSocket = ({ roomID }: Props) => {
         }
       } else if (message.type === 'answer') {
         try {
-          if (peerConnectionRef.current) {
+          if (
+            peerConnectionRef.current &&
+            peerConnectionRef.current.signalingState !==
+              'stable'
+          ) {
             await peerConnectionRef.current.setRemoteDescription(
               message.sdp
             );
