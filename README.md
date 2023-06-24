@@ -46,7 +46,7 @@ npm run type-check
 
 ## ディレクトリ構成
 
-### app/components/
+### app/\_components/
 
 各コンポーネントを配置
 
@@ -57,5 +57,11 @@ npm run type-check
 ### types
 
 型定義ファイルを配置
+
+### utils
+
+共通して使用される関数やユーティリティ
+
+- httpClient.ts: API と通信するための fetch 関数を定義したファイルです。getFetcher 関数と postFetcher 関数 HandleErrors 関数を含みます。
 
 ディレクトリ構造はこの [GitHub レポジトリ](https://github.com/fumi-sagawa/next-simple-template/blob/main/docs/directory-structure.md)を参考
