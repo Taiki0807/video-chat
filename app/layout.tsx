@@ -1,4 +1,4 @@
-import { Header } from './components/pages';
+import { Header } from './_components/pages';
 import './globals.css';
 
 export default function RootLayout({

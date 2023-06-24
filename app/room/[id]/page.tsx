@@ -1,4 +1,4 @@
-import { Video } from '@/app/components/pages';
+import { Video } from '@/app/_components/pages';
 
 interface Props {
   params: { id: string };
