@@ -230,7 +230,8 @@ const useWebSocket = ({ roomID }: Props) => {
     };
     init();
     socketRef.current = new WebSocket(
-      `ws://localhost:8000/ws/signaling/${roomID}/`
+      process.env.NEXT_PUBLIC_API_WEBSOCKET_URL +
+        `/ws/signaling/${roomID}/`
     );
 
     socketRef.current.onopen = () => {
