@@ -315,6 +315,8 @@ const useWebSocket = ({ roomID }: Props) => {
                 message.sdp
               );
             }
+          } else {
+            restart();
           }
         } catch (error) {
           console.log(error);
