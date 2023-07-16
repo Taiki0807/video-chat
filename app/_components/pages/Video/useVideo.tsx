@@ -10,6 +10,10 @@ const useWebSocket = ({ roomID }: Props) => {
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [modal, setModal] = useState(false);
   const router = useRouter();
+  const [
+    shouldSetRemoteDescription,
+    setShouldSetRemoteDescription,
+  ] = useState(true);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -19,13 +23,116 @@ const useWebSocket = ({ roomID }: Props) => {
     useRef<RTCPeerConnection | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
 
-  useEffect(() => {
-    async function restart() {
+  async function restart() {
+    const stream =
+      await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+
+    const remoteStream = new MediaStream();
+
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = remoteStream;
+    }
+    const peerConnectionConfig = {
+      iceServers: [
+        {
+          urls: [
+            'stun:stun1.1.google.com:19302',
+            'stun:stun2.1.google.com:19302',
+          ],
+        },
+      ],
+    };
+    peerConnectionRef.current = new RTCPeerConnection(
+      peerConnectionConfig
+    );
+
+    stream.getTracks().forEach((track) => {
+      peerConnectionRef.current?.addTrack(track, stream);
+    });
+
+    peerConnectionRef.current.onicecandidate = (event) => {
+      if (event.candidate) {
+        socketRef.current?.send(
+          JSON.stringify({
+            type: 'candidate',
+            candidate: event.candidate,
+          })
+        );
+      }
+    };
+    peerConnectionRef.current.ontrack = (event) => {
+      event.streams[0].getTracks().forEach((track) => {
+        const remoteStream = remoteVideoRef.current
+          ?.srcObject as MediaStream;
+        remoteStream.addTrack(track);
+      });
+    };
+    if (peerConnectionRef.current) {
+      const offer =
+        await peerConnectionRef.current.createOffer();
+      await peerConnectionRef.current.setLocalDescription(
+        offer
+      );
+    }
+    if (peerConnectionRef.current) {
+      socketRef.current?.send(
+        JSON.stringify({
+          type: 'offer',
+          sdp: peerConnectionRef.current.localDescription,
+        })
+      );
+    }
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.style.display = 'block';
+    }
+    peerConnectionRef.current.oniceconnectionstatechange =
+      () => {
+        if (
+          peerConnectionRef.current &&
+          peerConnectionRef.current.iceConnectionState ===
+            'disconnected'
+        ) {
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.pause();
+            remoteVideoRef.current.style.display = 'none';
+          }
+          peerConnectionRef.current.ontrack = (event) => {
+            event.streams[0]
+              .getTracks()
+              .forEach((track) => {
+                const remoteStream = remoteVideoRef.current
+                  ?.srcObject as MediaStream;
+                remoteStream.addTrack(track);
+              });
+          };
+
+          isConnectedRef.current = true;
+          socketRef.current?.send(
+            JSON.stringify({
+              type: 'disconnect',
+            })
+          );
+
+          if (peerConnectionRef.current) {
+            peerConnectionRef.current.close();
+            peerConnectionRef.current = null;
+          }
+        }
+      };
+  }
+  const init = async () => {
+    try {
       const stream =
         await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: true,
         });
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
 
       const remoteStream = new MediaStream();
 
@@ -69,24 +176,20 @@ const useWebSocket = ({ roomID }: Props) => {
           remoteStream.addTrack(track);
         });
       };
-      if (peerConnectionRef.current) {
-        const offer =
-          await peerConnectionRef.current.createOffer();
-        await peerConnectionRef.current.setLocalDescription(
+      const offer =
+        await peerConnectionRef.current?.createOffer();
+      if (offer) {
+        await peerConnectionRef.current?.setLocalDescription(
           offer
         );
-      }
-      if (peerConnectionRef.current) {
         socketRef.current?.send(
           JSON.stringify({
             type: 'offer',
-            sdp: peerConnectionRef.current.localDescription,
+            sdp: offer,
           })
         );
       }
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.style.display = 'block';
-      }
+
       peerConnectionRef.current.oniceconnectionstatechange =
         () => {
           if (
@@ -98,22 +201,17 @@ const useWebSocket = ({ roomID }: Props) => {
               remoteVideoRef.current.pause();
               remoteVideoRef.current.style.display = 'none';
             }
-            peerConnectionRef.current.ontrack = (event) => {
-              event.streams[0]
-                .getTracks()
-                .forEach((track) => {
-                  const remoteStream = remoteVideoRef
-                    .current?.srcObject as MediaStream;
-                  remoteStream.addTrack(track);
-                });
-            };
+            const remoteStream = remoteVideoRef.current
+              ?.srcObject as MediaStream;
+            remoteStream
+              .getVideoTracks()
+              .forEach((track) => {
+                track.enabled = false;
+                track.stop();
+                remoteStream.removeTrack(track);
+              });
 
             isConnectedRef.current = true;
-            socketRef.current?.send(
-              JSON.stringify({
-                type: 'disconnect',
-              })
-            );
 
             if (peerConnectionRef.current) {
               peerConnectionRef.current.close();
@@ -121,113 +219,11 @@ const useWebSocket = ({ roomID }: Props) => {
             }
           }
         };
+    } catch (error) {
+      console.error(error);
     }
-
-    const init = async () => {
-      try {
-        const stream =
-          await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true,
-          });
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-
-        const remoteStream = new MediaStream();
-
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = remoteStream;
-        }
-        const peerConnectionConfig = {
-          iceServers: [
-            {
-              urls: [
-                'stun:stun1.1.google.com:19302',
-                'stun:stun2.1.google.com:19302',
-              ],
-            },
-          ],
-        };
-        peerConnectionRef.current = new RTCPeerConnection(
-          peerConnectionConfig
-        );
-
-        stream.getTracks().forEach((track) => {
-          peerConnectionRef.current?.addTrack(
-            track,
-            stream
-          );
-        });
-
-        peerConnectionRef.current.onicecandidate = (
-          event
-        ) => {
-          if (event.candidate) {
-            socketRef.current?.send(
-              JSON.stringify({
-                type: 'candidate',
-                candidate: event.candidate,
-              })
-            );
-          }
-        };
-        peerConnectionRef.current.ontrack = (event) => {
-          event.streams[0].getTracks().forEach((track) => {
-            const remoteStream = remoteVideoRef.current
-              ?.srcObject as MediaStream;
-            remoteStream.addTrack(track);
-          });
-        };
-
-        const offer =
-          await peerConnectionRef.current?.createOffer();
-        if (offer) {
-          await peerConnectionRef.current?.setLocalDescription(
-            offer
-          );
-          socketRef.current?.send(
-            JSON.stringify({
-              type: 'offer',
-              sdp: offer,
-            })
-          );
-        }
-
-        peerConnectionRef.current.oniceconnectionstatechange =
-          () => {
-            if (
-              peerConnectionRef.current &&
-              peerConnectionRef.current
-                .iceConnectionState === 'disconnected'
-            ) {
-              if (remoteVideoRef.current) {
-                remoteVideoRef.current.pause();
-                remoteVideoRef.current.style.display =
-                  'none';
-              }
-              const remoteStream = remoteVideoRef.current
-                ?.srcObject as MediaStream;
-              remoteStream
-                .getVideoTracks()
-                .forEach((track) => {
-                  track.enabled = false;
-                  track.stop();
-                  remoteStream.removeTrack(track);
-                });
-
-              isConnectedRef.current = true;
-
-              if (peerConnectionRef.current) {
-                peerConnectionRef.current.close();
-                peerConnectionRef.current = null;
-              }
-            }
-          };
-      } catch (error) {
-        console.error(error);
-      }
-    };
+  };
+  useEffect(() => {
     init();
     socketRef.current = new WebSocket(
       process.env.NEXT_PUBLIC_API_WEBSOCKET_URL +
@@ -235,12 +231,15 @@ const useWebSocket = ({ roomID }: Props) => {
     );
 
     socketRef.current.onopen = () => {
-      console.log('WebSocket connected.');
-      socketRef.current?.send(
-        JSON.stringify({
-          type: 'websocketConnected',
-        })
-      );
+      if (
+        socketRef.current?.readyState === WebSocket.OPEN
+      ) {
+        socketRef.current?.send(
+          JSON.stringify({
+            type: 'websocketConnected',
+          })
+        );
+      }
     };
 
     socketRef.current.onerror = (error) => {
@@ -248,7 +247,6 @@ const useWebSocket = ({ roomID }: Props) => {
     };
 
     socketRef.current.onclose = () => {
-      console.log('WebSocket disconnected.');
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close();
       }
@@ -256,16 +254,10 @@ const useWebSocket = ({ roomID }: Props) => {
 
     socketRef.current.onmessage = async (event) => {
       const message = JSON.parse(event.data);
-      console.log(message);
 
       if (message.type === 'offer') {
-        if (
-          remoteVideoRef.current &&
-          remoteVideoRef.current &&
-          isConnectedRef.current
-        ) {
+        if (isConnectedRef.current) {
           isConnectedRef.current = false;
-          restart();
         }
         try {
           if (
@@ -273,6 +265,7 @@ const useWebSocket = ({ roomID }: Props) => {
             peerConnectionRef.current.signalingState !==
               'stable'
           ) {
+            setShouldSetRemoteDescription(true);
             await peerConnectionRef.current.setRemoteDescription(
               message.sdp
             );
@@ -282,8 +275,6 @@ const useWebSocket = ({ roomID }: Props) => {
             await peerConnectionRef.current.setLocalDescription(
               answer
             );
-
-            console.log('answer', answer);
 
             peerConnectionRef.current.onicecandidate =
               async (event) => {
@@ -300,34 +291,33 @@ const useWebSocket = ({ roomID }: Props) => {
                   );
                 }
               };
+          } else {
+            restart();
           }
         } catch (error) {
           console.error(error);
         }
-      } else if (message.type === 'answer') {
+      } else if (
+        message.type === 'answer' &&
+        peerConnectionRef.current &&
+        peerConnectionRef.current.signalingState ===
+          'have-local-offer'
+      ) {
         try {
-          if (
-            peerConnectionRef.current &&
-            peerConnectionRef.current.signalingState !==
-              'stable'
-          ) {
-            await peerConnectionRef.current.setRemoteDescription(
-              message.sdp
-            );
+          if (peerConnectionRef.current) {
+            if (
+              shouldSetRemoteDescription &&
+              peerConnectionRef.current
+                .remoteDescription === null
+            ) {
+              setShouldSetRemoteDescription(false);
+              await peerConnectionRef.current.setRemoteDescription(
+                message.sdp
+              );
+            }
           }
         } catch (error) {
-          console.error(error);
-        }
-      } else if (message.type === 'candidate') {
-        try {
-          const candidate = new RTCIceCandidate(
-            message.candidate
-          );
-          await peerConnectionRef.current?.addIceCandidate(
-            candidate
-          );
-        } catch (error) {
-          console.error(error);
+          console.log(error);
         }
       } else if (message.type === 'disconnect') {
         if (remoteVideoRef.current) {
